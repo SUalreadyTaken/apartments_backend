@@ -18,11 +18,11 @@ const kvParish = 'Tallinn';
 let isScraping: boolean = false;
 const pseudoCache = new PseudoCache();
 
-// push last 50 Adds to pseudoCache
+// push last 200 Adds to pseudoCache
 const populateCache = async() => {
 		await Advertisement.find({})
 			.sort({ date: -1 })
-			.limit(50)
+			.limit(200)
 			.exec(function (err, docs) {
         // console.log(`docs length > ${docs.length}`);
         pseudoCache.needToAddToCache(docs);
@@ -54,15 +54,15 @@ export async function runScrape() {
 }
 
 const addToDb = async (newAdds: AdvertisementI[]) => {
-	try {
-		for (const ad of newAdds) {
+  for (const ad of newAdds) {
+    try {
 			console.log(`found new Add > ${JSON.stringify(ad.adId)} || ${JSON.stringify(ad.url)}`);
 			await Advertisement.create(ad);
-		}
-	} catch (error) {
-		console.log(`🔥 ERROR in addToDb 🔥
-    ${error}`);
-	}
+    } catch (error) {
+      console.log(`🔥 ERROR in addToDb 🔥
+      ${error}`);
+    }
+  }
 };
 
 // check can only search by 1 county/parish
