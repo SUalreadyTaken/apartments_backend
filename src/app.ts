@@ -36,7 +36,9 @@ app.use(cookieParser());
 app.use('/ad', adController);
 
 let alternativeBoolean:boolean  = undefined;
-if (process.env.USE_ALTERNATIVE_APPS) {
+// @ts-ignore
+let usingAlternative: boolean = process.env.USE_ALTERNATIVE_APPS;
+if (usingAlternative === true) {
   getAlternativeBoolean();
   setInterval(() => runScrape(), 40000);
   setInterval(() => { if (!alternativeBoolean && alternativeBoolean != undefined) request(process.env.HEROKU_URL + 'ad/');
@@ -48,4 +50,5 @@ if (process.env.USE_ALTERNATIVE_APPS) {
 
 // TODO AlternativeModel
 async function getAlternativeBoolean() {
+  console.log('todo');
 }
