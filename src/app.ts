@@ -2,7 +2,6 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import cors from 'cors';
-import { runScrape } from './scrape/scrapeRunnable';
 const request = require('request');
 const sleep = require('util').promisify(setTimeout);
 const cookieParser = require('cookie-parser');
@@ -15,6 +14,7 @@ app.use(cors());
 app.options('*', cors());
 // duplicate.. needed for test
 import dotenv from 'dotenv';
+import { runScrape, runDataUpdate } from './scrape/deScrapeRunnable';
 dotenv.config({ path: `${__dirname}/../config.env` });
 
 if (process.env.NODE_ENV === 'development') {
@@ -41,10 +41,14 @@ let usingAlternative: boolean = process.env.USE_ALTERNATIVE_APPS;
 if (usingAlternative === true) {
   getAlternativeBoolean();
   setInterval(() => runScrape(), 40000);
+  // will be locked if still updating
+  setInterval(() => runDataUpdate(), 60000);
   setInterval(() => { if (!alternativeBoolean && alternativeBoolean != undefined) request(process.env.HEROKU_URL + 'ad/');
-	}, 240000);
+}, 240000);
 } else {
   setInterval(() => runScrape(), 40000);
+  // will be locked if still updating
+  setInterval(() => runDataUpdate(), 60000);
 	setInterval(() => request(process.env.HEROKU_URL + 'ad/'), 240000);
 }
 

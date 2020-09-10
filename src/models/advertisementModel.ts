@@ -10,11 +10,15 @@ export interface IAdvertisement extends Document {
 	cityPart: string;
 	rooms: number;
 	m2: number;
-	floor?: string;
+	floor: string;
 	price: number;
-	m2price: number;
+	m2Price: number;
 	description: string;
-	date?: Date;
+	date: Date;
+	condition: string;
+	energy: string;
+	propertyOf: string;
+	buildYear: number;
 }
 
 const advertisementSchema: Schema = new Schema({
@@ -22,25 +26,29 @@ const advertisementSchema: Schema = new Schema({
 	adId: { type: String, required: true, unique: true },
 	site: { type: String, required: true },
 	url: { type: String, required: true, unique: true },
-	imgUrl: { type: String, required: true, unique: true },
+	imgUrl: { type: String },
 	title: { type: String, required: true },
 	cityPart: { type: String, required: true },
 	rooms: { type: Number },
 	m2: { type: Number },
 	floor: { type: String },
 	price: { type: Number, required: true },
-	m2price: { type: Number },
+	m2Price: { type: Number },
 	description: { type: String },
-	date: { type: Date, required: false, default: new Date() },
+	condition: { type: String },
+	energy: { type: String },
+	propertyOf: { type: String },
+	buildYear: { type: Number },
+	date: { type: Date, required: false, default: Date.now() },
 });
 
-advertisementSchema.pre('save', function(this: IAdvertisement, next) {
-  if (this.site === 'kv') {
-    this.adId = this.adId + '_kv'
-  } else {
-    this.adId = this.adId + '_c24'
-  }
-  next();
-});
+// advertisementSchema.pre('save', function (this: IAdvertisement, next) {
+// 	if (this.site === 'kv') {
+// 		this.adId = this.adId + '_kv';
+// 	} else {
+// 		this.adId = this.adId + '_c24';
+// 	}
+// 	next();
+// });
 
 export const Advertisement = mongoose.model<IAdvertisement>('Advertisement', advertisementSchema);

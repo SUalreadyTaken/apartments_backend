@@ -4,8 +4,7 @@ import { catchAsync } from '../utils/catchAsync';
 import { AdvertisementI } from '..';
 import { NextFunction, Response, Request } from 'express';
 
-// @ts-ignore
-router.get('/', (req, res) => {
+router.get('/', (req: Request, res: Response) => {
   res.send({ date: Date.now() });
 });
 
