@@ -130,8 +130,8 @@ const addToDb = async (newAd: AdvertisementI) => {
 			const searching = newAd.adId;
 			const old = await Advertisement.findOne({ adId: searching }).exec();
 			try {
-				devLog(`${newAd}`);
-				devLog(`${old}`);
+				console.log(`${newAd}`);
+				console.log(`${old}`);
 				if (!checkEquality(newAd, old)) {
 					await Advertisement.updateOne({ adId: searching }, newAd).exec();
 				}
@@ -147,19 +147,19 @@ const addToDb = async (newAd: AdvertisementI) => {
 const propertyCheck = (latest: any, old: any) => {
 	if (latest !== undefined || latest !== '') {
 		if (old === undefined) {
-			devLog(`old > '${old}'\nlatest > '${latest}'`);
+			console.log(`old > '${old}'\nlatest > '${latest}'`);
 			return false;
 		} else {
 			if (latest !== old) {
-				devLog('old is not new');
-				devLog(`old > '${old}'\nlatest > '${latest}'`);
+				console.log('old is not new');
+				console.log(`old > '${old}'\nlatest > '${latest}'`);
 				return false;
 			}
 		}
 	}
 	if (old !== undefined && latest === undefined) {
-		devLog('one is undefined');
-		devLog(`old > '${old}'\nlatest > '${latest}'`);
+		console.log('one is undefined');
+		console.log(`old > '${old}'\nlatest > '${latest}'`);
 		return false;
 	}
 	return true;
@@ -211,8 +211,8 @@ async function equality(data: AdvertisementI, oldData: IAdvertisement) {
 		await Advertisement.updateOne({ adId: searching }, data as AdvertisementI).exec();
 		// just check .. delete later
 		const newInDb = await Advertisement.findOne({ adId: searching }).exec();
-		devLog(`new in db `);
-		devLog(`${JSON.stringify(newInDb)}`);
+		console.log(`new in db `);
+		console.log(`${JSON.stringify(newInDb)}`);
 	}
 }
 

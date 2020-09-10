@@ -2,19 +2,19 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import cors from 'cors';
+import { runScrape, runDataUpdate } from './scrape/deScrapeRunnable';
 const request = require('request');
 const sleep = require('util').promisify(setTimeout);
 const cookieParser = require('cookie-parser');
 // const fetch = require('node-fetch');
 const adController = require(`${__dirname}/controllers/adController.ts`);
+// duplicate.. needed for test
+import dotenv from 'dotenv';
 export const app = express();
 
 app.enable('trust proxy');
 app.use(cors());
 app.options('*', cors());
-// duplicate.. needed for test
-import dotenv from 'dotenv';
-import { runScrape, runDataUpdate } from './scrape/deScrapeRunnable';
 dotenv.config({ path: `${__dirname}/../config.env` });
 
 if (process.env.NODE_ENV === 'development') {
