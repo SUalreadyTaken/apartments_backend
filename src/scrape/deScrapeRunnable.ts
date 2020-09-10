@@ -121,7 +121,6 @@ const addToDb = async (newAd: AdvertisementI) => {
 	try {
 		console.log(`found new Add > ${newAd.adId} || ${newAd.url}`);
 		await new Advertisement(newAd).save();
-		console.timeEnd('insertNewKv'); // delete later
 	} catch (error) {
 		console.log(`🔥 ERROR in addToDb `);
 		console.log(`${error}`);
