@@ -261,7 +261,7 @@ const sliceSpaceNonBreakingSpace = (s: string) => {
 export async function fetchData(url: string) {
 	// devLog('🕵️‍♂️ Crawling KV data...');
 	return await axios(url).catch((err: any) => {
-		console.log(`🔥Error kv axios request 🔥`);
+		console.log(`🔥Error axios request ${url} 🔥`);
 		console.log(err);
 	});
 }
