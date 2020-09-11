@@ -29,7 +29,7 @@ export async function c24DataScrape(target: initScrapeDataI): Promise<Advertisem
 export const isC24Alive = (html: any): CheerioStatic | boolean => {
 	const $ = cheerio.load(html, {});
 	const h1Title = $('div.container > div.wrapper > div.content > h2').text()?.trim();
-	if (h1Title === 'Oihh!' || !h1Title) {
+	if (h1Title === 'Oihh!') {
 		// Ad is deleted.. delete from db
 		return false;
 	}
@@ -40,8 +40,8 @@ export const isKvAlive = (html: any): CheerioStatic | boolean => {
 	const $ = cheerio.load(html, {});
 
 	// body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1
-	const h1Title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div').text()?.trim();
-	if (h1Title === 'Kuulutus on kustutatud' || !h1Title) {
+	const h1Title = $('div.main-content-wrap > div.hgroup.large > div').text()?.trim();
+	if (h1Title === 'Kuulutus on kustutatud') {
 		// Ad is deleted.. delete from db
 		return false;
 	}
@@ -79,7 +79,11 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 
 	const generalInfo = $('div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > div.factsheet');
 	let m2 = parseFloat(
-		generalInfo.find('table:nth-child(2) > tbody > tr:nth-child(2) > td > span').text()?.split(' m')[0].replace(',', '.')
+		generalInfo
+			.find('table:nth-child(2) > tbody > tr:nth-child(2) > td > span')
+			.text()
+			?.split(' m')[0]
+			.replace(',', '.')
 	);
 	m2 = isNaN(m2) ? 0 : m2;
 
@@ -246,26 +250,28 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 };
 
 const sliceSpaceNonBreakingSpace = (s: string) => {
-  if (s !== undefined) {
-    let temp = s.replace('\xa0', '');
-    const index = temp.indexOf('€');
-    return index > 0 ? temp.slice(0, index) : temp;
-  }
-  return s;
+	if (s !== undefined) {
+		let temp = s.replace('\xa0', '');
+		const index = temp.indexOf('€');
+		return index > 0 ? temp.slice(0, index) : temp;
+	}
+	return s;
 };
 
 export async function fetchData(url: string) {
 	// devLog('🕵️‍♂️ Crawling KV data...');
 	return await axios(url).catch((err: any) => {
 		console.log(`🔥Error kv axios request 🔥`);
+		console.log(err);
 	});
 }
 
 // (async () => {
-// 	console.time('sss');
+//   // https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272925.html
+//   console.time('sss');
 // 	const target = {
 // 		id: 'asdasd',
-// 		url: 'http://www.kv.ee/3244326',
+// 		url: 'https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272921235.html',
 // 		cityPart: 'Kesklinn',
 // 	};
 // 	const test = await kvDataScrape(target);
@@ -273,7 +279,7 @@ export async function fetchData(url: string) {
 
 // 	const target2 = {
 // 		id: 'asdasd',
-// 		url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/6083660',
+// 		url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/6083660123123',
 // 		cityPart: 'Kesklinn',
 // 	};
 // 	// const target2 = {
