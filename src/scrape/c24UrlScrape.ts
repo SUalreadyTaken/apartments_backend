@@ -5,7 +5,7 @@ import * as cheerio from 'cheerio';
 import { devLog } from './../utils/devLogger';
 import { initScrapeDataI } from '.';
 import { c24CityPartsSet } from './../utils/searchVariables';
-let openingTab = 0;
+let openedTabs = 0;
 let browser: puppeteer.Browser;
 
 export async function c24InitScrape(countyList: string[], parishList: string[]): Promise<initScrapeDataI[]> {
@@ -14,12 +14,12 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 	// let browser;
 	try {
 		// // TODO check if browser gives memory problems if not reset
-		if (openingTab === 0) {
+		if (openedTabs === 0) {
 			if (browser) await browser.close();
 			browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-			openingTab++;
+			openedTabs++;
 		} else {
-			openingTab = openingTab >= 20 ? 0 : openingTab + 1;
+			openedTabs = openedTabs >= 20 ? 0 : openedTabs + 1;
 		}
 		// browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 		devLog('🕵️‍♂️ Crawling C24 data...');

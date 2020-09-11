@@ -53,8 +53,8 @@ export async function runDataUpdate() {
 						const data = kvScrape(target, cheerio$ as CheerioStatic);
 						await equality(data, oldData);
 					} else {
+            await Advertisement.deleteOne({ adId: searching }).exec();
 						console.log(`Deleted ad ${oldData.url}`);
-						await Advertisement.deleteOne({ adId: searching }).exec();
 						pseudoCache.removeFromCache(oldData.adId);
 					}
 				}
@@ -66,8 +66,8 @@ export async function runDataUpdate() {
 						const data = c24Scrape(target, cheerio$ as CheerioStatic);
 						await equality(data, oldData);
 					} else {
+            await Advertisement.deleteOne({ adId: searching }).exec();
 						console.log(`Deleted ad ${oldData.url}`);
-						await Advertisement.deleteOne({ adId: searching }).exec();
 						pseudoCache.removeFromCache(oldData.adId);
 					}
 				}
@@ -81,7 +81,7 @@ export async function runDataUpdate() {
 export async function runScrape() {
 	if (!isScraping) {
 		devLog(`
-    --------------------------------------------
+    -------------------------------------------
     `);
 		isScraping = !isScraping;
 		if (firstRun) await populateCache();
@@ -210,9 +210,9 @@ async function equality(data: AdvertisementI, oldData: IAdvertisement) {
 		const searching = oldData.adId;
 		await Advertisement.updateOne({ adId: searching }, data as AdvertisementI).exec();
 		// just check .. delete later
-		const newInDb = await Advertisement.findOne({ adId: searching }).exec();
-		console.log(`new in db `);
-		console.log(`${JSON.stringify(newInDb)}`);
+		// const newInDb = await Advertisement.findOne({ adId: searching }).exec();
+		// console.log(`new in db `);
+		// console.log(`${JSON.stringify(newInDb)}`);
 	}
 }
 

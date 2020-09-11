@@ -28,8 +28,8 @@ export async function c24DataScrape(target: initScrapeDataI): Promise<Advertisem
 
 export const isC24Alive = (html: any): CheerioStatic | boolean => {
 	const $ = cheerio.load(html, {});
-	const h1Title = $('div.container > div.wrapper > div.content > h2').text().trim();
-	if (h1Title === 'Oihh!') {
+	const h1Title = $('div.container > div.wrapper > div.content > h2').text()?.trim();
+	if (h1Title === 'Oihh!' || !h1Title) {
 		// Ad is deleted.. delete from db
 		return false;
 	}
@@ -40,8 +40,8 @@ export const isKvAlive = (html: any): CheerioStatic | boolean => {
 	const $ = cheerio.load(html, {});
 
 	// body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1
-	const h1Title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div').text().trim();
-	if (h1Title === 'Kuulutus on kustutatud') {
+	const h1Title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div').text()?.trim();
+	if (h1Title === 'Kuulutus on kustutatud' || !h1Title) {
 		// Ad is deleted.. delete from db
 		return false;
 	}
@@ -88,7 +88,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 		'div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > div.factsheet > table:nth-child(2) > tbody > tr'
 	);
 	child2.each(function (this: CheerioElement) {
-		const tmp = $(this).text().trim()?.split('Ehitusaasta:');
+		const tmp = $(this).text()?.trim().split('Ehitusaasta:');
 		if (tmp.length === 2) {
 			buildYear = isNaN(parseFloat(tmp[1])) ? 0 : parseFloat(tmp[1]);
 			return false; // break
@@ -103,15 +103,15 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	);
 	child4.each(function (this: CheerioElement) {
 		if (energy === '') {
-			const tmpEnergy = $(this).text().trim()?.split('Energiamärgis:');
+			const tmpEnergy = $(this).text()?.trim().split('Energiamärgis:');
 			if (tmpEnergy.length === 2) energy = tmpEnergy[1].trim();
 		}
 		if (condition === '') {
-			const tmpCondition = $(this).text().trim()?.split('Seisukord:');
+			const tmpCondition = $(this).text()?.trim().split('Seisukord:');
 			if (tmpCondition.length === 2) condition = tmpCondition[1].trim();
 		}
 		if (propertyOf === '') {
-			const tmpPropertyOf = $(this).text().trim()?.split('Omandivorm:');
+			const tmpPropertyOf = $(this).text()?.trim().split('Omandivorm:');
 			if (tmpPropertyOf.length === 2) propertyOf = tmpPropertyOf[1].trim();
 		}
 	});
@@ -123,11 +123,11 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	let floor = '';
 	child6.each(function (this: CheerioElement) {
 		if (rooms === 0) {
-			const tmpRooms = $(this).text().trim()?.split('Tubade arv:');
+			const tmpRooms = $(this).text()?.trim().split('Tubade arv:');
 			if (tmpRooms.length === 2) rooms = isNaN(parseFloat(tmpRooms[1])) ? 0 : parseFloat(tmpRooms[1]);
 		}
 		if (floor === '') {
-			const tmpFloor = $(this).text().trim()?.split('Korrus/Korruseid:');
+			const tmpFloor = $(this).text()?.trim().split('Korrus/Korruseid:');
 			if (tmpFloor.length === 2) floor = tmpFloor[1].trim();
 		}
 	});
@@ -158,13 +158,13 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): AdvertisementI => {
 	const $ = cheerio$;
 
-	const title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1').text().trim();
+	const title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1').text()?.trim();
 
 	const description = $(
 		'body > div.main-helper > div > div.main-content-wrap > div.grid.object-article > div.col-1-2.t-1-2 > div > div.object-article-section > div.object-article-body > h2'
 	)
 		.text()
-		.trim();
+		?.trim();
 	const imgUrl = $('#obj_main_image').attr('src');
 
 	let price = 0;
@@ -181,9 +181,9 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 		'body > div.main-helper > div > div.main-content-wrap > div.grid.object-article > div.col-1-4.t-1-2 > div > div.object-article-details > div.grid > div > div'
 	);
 	priceAndM2.each(function (this: CheerioElement) {
-		price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('strong').text().trim()));
+		price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('strong').text()?.trim()));
 		price = isNaN(price) ? 0 : price;
-		m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text().trim()));
+		m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text()?.trim()));
 		m2Price = isNaN(m2Price) ? 0 : m2Price;
 	});
 
@@ -192,34 +192,34 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 	);
 	otherData.each(function (this: CheerioElement) {
 		if (rooms === 0) {
-			const tmpRooms = $(this).text().trim()?.split('Tube');
+			const tmpRooms = $(this).text()?.trim().split('Tube');
 			if (tmpRooms.length === 2) rooms = isNaN(parseFloat(tmpRooms[1])) ? 0 : parseFloat(tmpRooms[1]);
 		}
 		if (m2 === 0) {
-			const tmpM2 = $(this).text().trim()?.split('Üldpind');
+			const tmpM2 = $(this).text()?.trim().split('Üldpind');
 			if (tmpM2.length === 2) {
 				const t = parseFloat(tmpM2[1]?.split(' m')[0]);
 				if (!isNaN(t)) m2 = t;
 			}
 		}
 		if (floor === '') {
-			const tmpFloor = $(this).text().trim()?.split('Korrus/Korruseid');
+			const tmpFloor = $(this).text()?.trim().split('Korrus/Korruseid');
 			if (tmpFloor.length === 2) floor = tmpFloor[1].trim();
 		}
 		if (buildYear === 0) {
-			const tmpM2 = $(this).text().trim()?.split('Ehitusaasta');
+			const tmpM2 = $(this).text()?.trim().split('Ehitusaasta');
 			if (tmpM2.length === 2) buildYear = isNaN(parseInt(tmpM2[1])) ? 0 : parseInt(tmpM2[1]);
 		}
 		if (condition === '') {
-			const tmpCondition = $(this).text().trim()?.split('Seisukord');
+			const tmpCondition = $(this).text()?.trim().split('Seisukord');
 			if (tmpCondition.length === 2) condition = tmpCondition[1].trim();
 		}
 		if (propertyOf === '') {
-			const tmpPropertyOf = $(this).text().trim()?.split('Omandivorm');
+			const tmpPropertyOf = $(this).text()?.trim().split('Omandivorm');
 			if (tmpPropertyOf.length === 2) propertyOf = tmpPropertyOf[1].trim();
 		}
 		if (energy === '') {
-			const tmpEnergy = $(this).text().trim()?.split('Energiamärgis');
+			const tmpEnergy = $(this).text()?.trim().split('Energiamärgis');
 			if (tmpEnergy.length === 2) energy = tmpEnergy[1].trim();
 		}
 	});
