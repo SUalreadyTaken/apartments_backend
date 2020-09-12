@@ -9,8 +9,8 @@ let openedTabs = 0;
 let browser: puppeteer.Browser;
 
 export async function c24InitScrape(countyList: string[], parishList: string[]): Promise<initScrapeDataI[]> {
-  let result: initScrapeDataI[] = [];
-  let page: Page;
+	let result: initScrapeDataI[] = [];
+	let page: Page;
 	// let browser;
 	try {
 		// // TODO check if browser gives memory problems if not reset
@@ -55,8 +55,8 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		if (countyList.length != 0 || parishList.length != 0) {
 			console.log(`something went wrong arrays need to be empty
       countyList > ${countyList} | parishList > ${parishList}`);
-      throw new Error;
-      // await page.close();
+			throw new Error();
+			// await page.close();
 			// return result;
 		}
 		// await (await page.$('input[name="priceRangeSearch:minValue"]')).focus();
@@ -85,19 +85,18 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 					break;
 				}
 			}
-			result.push({ url, id, cityPart });
+			if (url.includes('city24.ee/')) result.push({ url, id, cityPart });
 		});
 		// await page.close();
 		// devLog(`table len > ${advertisementTable.length}`);
 		// await page.waitFor(2000);
 	} catch (error) {
-    
-    console.log('🔥 ERROR 🔥');
+		console.log('🔥 ERROR 🔥');
 		console.log(error);
 		// process s.exit(1);
 	} finally {
-    if (page) await page.close();
-  }
+		if (page) await page.close();
+	}
 	// if (browser) await browser.close();
 	return result;
 }

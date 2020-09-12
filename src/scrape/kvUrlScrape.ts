@@ -45,7 +45,7 @@ const mainFunc = async (url: string): Promise<initScrapeDataI[]> => {
 					break;
 				}
 			}
-			result.push({ url, id, cityPart });
+			if (url.includes('kv.ee/')) result.push({ url, id, cityPart });
 		}
 	});
 	return result;
