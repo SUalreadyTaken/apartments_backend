@@ -32,11 +32,11 @@ const mainFunc = async (url: string): Promise<initScrapeDataI[]> => {
 		// ads dont have id
 		if ($(this).attr('id')) {
 			const id = $(this).attr('id') + '_kv';
-			const url = $(this).find('td.object-name > h2 > a').attr('href').split('?nr')[0];
+			const url = $(this).find('td.object-name > h2 > a').attr('href')?.split('?nr', 1)[0];
 			const tmpCityPart = $(this)
 				.find('a.object-title-a.text-truncate')
 				.text()
-				.split(',')
+				?.split(',')
 				.map((e) => e.trim());
 			let cityPart = '';
 			for (const t of tmpCityPart) {
@@ -64,9 +64,10 @@ const mainFunc = async (url: string): Promise<initScrapeDataI[]> => {
 // };
 
 async function fetchData(url: string) {
-	devLog('🕵️‍♂️ Crawling KV data...');
+	devLog('🕵️‍♂️ Crawling KV URLs...');
 	return await axios(url).catch((err: any) => {
-		console.log(`🔥Error kv axios request 🔥`);
+    console.log(`🔥Error kv axios request ${url}🔥`);
+    if (err.code) console.log(err.code);
 		// console.log(err);
 	});
 }

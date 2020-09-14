@@ -136,7 +136,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 		}
 	});
 
-	const imgUrl = $('#img1').attr('src')?.slice(2) || '';
+	const imgUrl = $('#img1').attr('src') || '';
 
 	return {
 		adId: target.id,

@@ -22,7 +22,7 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 			openedTabs = openedTabs >= 20 ? 0 : openedTabs + 1;
 		}
 		// browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-		devLog('🕵️‍♂️ Crawling C24 data...');
+		devLog('🕵️‍♂️ Crawling C24 URLs...');
 		page = await browser.newPage();
 		page.setViewport({ width: 1700, height: 768 });
 
@@ -72,11 +72,11 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		advertisementTable.each(function (this: CheerioElement) {
 			const combined = $(this).find('a.addressLink');
 			const id = combined.attr('name') + '_c24';
-			const url = combined.attr('href').split('?sel', 1)[0];
+			const url = combined.attr('href')?.split('?sel', 1)[0];
 			const tmpCityPartsList = combined
 				.find('span')
 				.text()
-				.split(',')
+				?.split(',')
 				.map((e) => e.trim());
 			let cityPart = '';
 			for (const cp of tmpCityPartsList) {

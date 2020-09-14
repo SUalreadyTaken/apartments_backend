@@ -54,7 +54,7 @@ export async function runDataUpdate() {
 						await equality(data, oldData);
 					} else {
             await Advertisement.deleteOne({ adId: searching }).exec();
-						console.log(`Deleted ad ${oldData.url}`);
+						console.log(`❎Deleted ad ❎ ${oldData.url}`);
 						pseudoCache.removeFromCache(oldData.adId);
 					}
 				}
@@ -67,7 +67,7 @@ export async function runDataUpdate() {
 						await equality(data, oldData);
 					} else {
             await Advertisement.deleteOne({ adId: searching }).exec();
-						console.log(`Deleted ad ${oldData.url}`);
+						console.log(`❎Deleted ad ❎ ${oldData.url}`);
 						pseudoCache.removeFromCache(oldData.adId);
 					}
 				}
@@ -130,8 +130,8 @@ const addToDb = async (newAd: AdvertisementI) => {
 			const searching = newAd.adId;
 			const old = await Advertisement.findOne({ adId: searching }).exec();
 			try {
-				console.log(`${newAd}`);
-				console.log(`${old}`);
+				// console.log(`${JSON.stringify(newAd)}`);
+				// console.log(`${old}`);
 				if (!checkEquality(newAd, old)) {
 					await Advertisement.updateOne({ adId: searching }, newAd).exec();
 				}
