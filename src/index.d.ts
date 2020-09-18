@@ -1,6 +1,6 @@
 import { IAdvertisement } from './models/advertisementModel';
+import { IPreferredApartment } from './models/preferredApartmentModel'
 
-// TODO change the name
 export interface AdvertisementI {
 	adId: IAdvertisement['adId'];
 	site: IAdvertisement['site'];
@@ -21,19 +21,17 @@ export interface AdvertisementI {
 	buildYear: IAdvertisement['buildYear'];
 }
 
-// TODO delete
-// export interface DeAdvertisementI {
-// 	adId: string;
-// 	site: string;
-// 	url: string;
-// 	imgUrl: string;
-// 	title: string;
-// 	cityPart: string;
-// 	rooms: string;
-// 	m2: string;
-// 	floor?: string;
-// 	price: string;
-// 	m2price: number;
-// 	description: string;
-// 	date?: string;
-// }
+export interface PreferredApartmentI {
+  userId: IPreferredApartment['userId'];
+	email: IPreferredApartment['email'];
+	cityPart?: IPreferredApartment['cityPart'];
+	priceMin?: IPreferredApartment['priceMin'];
+	priceMax?: IPreferredApartment['priceMax'];
+	m2Min?: IPreferredApartment['m2Min'];
+	m2Max?: IPreferredApartment['m2Max'];
+	roomsMin?: IPreferredApartment['roomsMin'];
+	roomsMax?: IPreferredApartment['roomsMax'];
+	m2PriceMin?: IPreferredApartment['m2PriceMin'];
+	m2PriceMax?: IPreferredApartment['m2PriceMax'];
+	date: IPreferredApartment['date'];
+}

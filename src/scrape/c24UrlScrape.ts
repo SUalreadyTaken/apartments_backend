@@ -1,10 +1,8 @@
 import puppeteer, { Page } from 'puppeteer';
 import * as cheerio from 'cheerio';
-// import { c24CityPartsSet } from '../utils/searchVariables';
-// import { AdvertisementI } from '..';
 import { devLog } from './../utils/devLogger';
 import { initScrapeDataI } from '.';
-import { c24CityPartsSet } from './../utils/searchVariables';
+import { c24CityPartsSet, c24CityPartsTrimmedMap } from './../utils/searchVariables';
 let openedTabs = 0;
 let browser: puppeteer.Browser;
 
@@ -56,8 +54,6 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 			console.log(`something went wrong arrays need to be empty
       countyList > ${countyList} | parishList > ${parishList}`);
 			throw new Error();
-			// await page.close();
-			// return result;
 		}
 		// await (await page.$('input[name="priceRangeSearch:minValue"]')).focus();
 		// await page.keyboard.type(priceMin, { delay: 25 });
@@ -65,7 +61,9 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		// await page.keyboard.type(priceMax, { delay: 25 });
 
 		await page.click('a.searchButton');
-		await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
+		await page
+			.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 })
+			.catch(() => console.log('probably 15sec timeout'));
 		const content = await page.content();
 		const $ = cheerio.load(content);
 		const advertisementTable = $('li.new.result.regular');
@@ -81,15 +79,12 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 			let cityPart = '';
 			for (const cp of tmpCityPartsList) {
 				if (c24CityPartsSet.has(cp)) {
-					cityPart = cp;
+					cityPart = c24CityPartsTrimmedMap.get(cp);
 					break;
 				}
 			}
 			if (url.includes('city24.ee/')) result.push({ url, id, cityPart });
 		});
-		// await page.close();
-		// devLog(`table len > ${advertisementTable.length}`);
-		// await page.waitFor(2000);
 	} catch (error) {
 		console.log('🔥 ERROR 🔥');
 		console.log(error);
@@ -97,7 +92,6 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 	} finally {
 		if (page) await page.close();
 	}
-	// if (browser) await browser.close();
 	return result;
 }
 
@@ -132,7 +126,7 @@ const clickAreas = async function (page: Page, selector: string, areaList: strin
 				}
 			}
 		} catch (error) {
-			console.log(`⚠️ ERROR clickAreas (usually will see 1) ⚠️ ${areaList}`);
+			// console.log(`⚠️ ERROR clickAreas (usually will see 1) ⚠️ ${areaList}`);
 			await page.waitFor(1000);
 		}
 		await page.waitFor(50);

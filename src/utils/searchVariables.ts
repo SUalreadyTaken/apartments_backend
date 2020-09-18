@@ -14,7 +14,7 @@ export const c24CityPartsSet: Set<string> = new Set([
 
 // kvParishes
 export const kvCityPartsSet: Set<string> = new Set([
-	'Kadriorg',
+  'Kadriorg',
 	'Vanalinn',
 	'Haabersti',
 	'Kesklinn',
@@ -26,8 +26,22 @@ export const kvCityPartsSet: Set<string> = new Set([
 	'Põhja-Tallinn',
 ]);
 
+export const c24CityPartsTrimmedMap: Map<string, string> = new Map([
+  ['Kadriorg', 'Kadriorg'],
+	['Vanalinn', 'Vanalinn'],
+	['Haabersti linnaosa', 'Haabersti'],
+	['Kesklinna linnaosa', 'Kesklinn'],
+	['Kristiine linnaosa', 'Kristiine'],
+	['Lasnamäe linnaosa', 'Lasnamäe'],
+	['Mustamäe linnaosa', 'Mustamäe'],
+	['Nõmme linnaosa', 'Nõmme'],
+	['Pirita linnaosa', 'Pirita'],
+	['Põhja-Tallinna linnaosa', 'Põhja-Tallinn'],
+])
+
+//DONT NEED THEM ANYMORE
 export const kvCountyCodeMap: Map<string, string> = new Map([
-	['Harjumaa', '1'],
+  ['Harjumaa', '1'],
 	['Hiiumaa', '2'],
 	['Ida-Virumaa', '3'],
 	['Jõgevamaa', '4'],

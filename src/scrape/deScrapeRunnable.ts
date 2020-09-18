@@ -6,7 +6,10 @@ import { devLog } from './../utils/devLogger';
 import { kvInitScrape } from './kvUrlScrape';
 import { c24InitScrape } from './c24UrlScrape';
 import { kvDataScrape, c24DataScrape, fetchData, isKvAlive, kvScrape, isC24Alive, c24Scrape } from './dataScrape';
+import { app } from './../app'
+import { EventEmitter } from 'events';
 const sleep = require('util').promisify(setTimeout);
+const apartmentEmitter: EventEmitter = app.get('apartmentEmitter');
 
 let firstRun = true;
 // TODO these will later come from db.. users search
@@ -28,13 +31,8 @@ const populateCache = async () => {
 		.sort({ date: -1 })
 		.limit(200)
 		.exec(function (err, docs) {
-			// let dbData = docs.map((data) => {
-			// 	return { url: data.url, id: data.adId, cityPart: data.cityPart };
-			// });
-			// pseudoCache.needToAddToCache(dbData);
 			pseudoCache.needToAddToCache(docs);
 			firstRun = false;
-			// devLog(`after init pseudoCache cache len > ${pseudoCache.cache.length}`);
 		});
 };
 
@@ -120,7 +118,8 @@ export async function runScrape() {
 const addToDb = async (newAd: AdvertisementI) => {
 	try {
 		console.log(`found new Add > ${newAd.adId} || ${newAd.url}`);
-		await new Advertisement(newAd).save();
+    await new Advertisement(newAd).save();
+    apartmentEmitter.emit('newApartment', newAd);
 	} catch (error) {
 		console.log(`🔥 ERROR in addToDb `);
 		console.log(`${error}`);
@@ -130,8 +129,6 @@ const addToDb = async (newAd: AdvertisementI) => {
 			const searching = newAd.adId;
 			const old = await Advertisement.findOne({ adId: searching }).exec();
 			try {
-				// console.log(`${JSON.stringify(newAd)}`);
-				// console.log(`${old}`);
 				if (!checkEquality(newAd, old)) {
 					await Advertisement.updateOne({ adId: searching }, newAd).exec();
 				}
@@ -167,13 +164,25 @@ const propertyCheck = (latest: any, old: any) => {
 
 // TODO simpelton version atm
 const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => {
+	if (!propertyCheck(latest.rooms, old.rooms)) {
+    apartmentEmitter.emit('newApartment' , latest);
+    return false;
+  };
+	if (!propertyCheck(latest.m2, old.m2)) {
+    apartmentEmitter.emit('newApartment' , latest);
+    return false;
+  };
+	if (!propertyCheck(latest.price, old.price)) {
+    apartmentEmitter.emit('newApartment' , latest);
+    return false;
+  } 
+	if (!propertyCheck(latest.m2Price, old.m2Price)) {
+    apartmentEmitter.emit('newApartment' , latest);
+    return false;
+  }
 	if (!propertyCheck(latest.imgUrl, old.imgUrl)) return false;
 	if (!propertyCheck(latest.title, old.title)) return false;
-	if (!propertyCheck(latest.rooms, old.rooms)) return false;
-	if (!propertyCheck(latest.m2, old.m2)) return false;
-	if (!propertyCheck(latest.floor, old.floor)) return false;
-	if (!propertyCheck(latest.price, old.price)) return false;
-	if (!propertyCheck(latest.m2Price, old.m2Price)) return false;
+  if (!propertyCheck(latest.floor, old.floor)) return false;
 	if (!propertyCheck(latest.description, old.description)) return false;
 	if (!propertyCheck(latest.condition, old.condition)) return false;
 	if (!propertyCheck(latest.energy, old.energy)) return false;
@@ -183,36 +192,11 @@ const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => 
 	return true;
 };
 
-// const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => {
-//   if (aaa(latest.imgUrl, old.imgUrl)) return false;
-//   if (latest.title && latest.title !== old.title) return false;
-//   if (latest.rooms && latest.rooms !== old.rooms) return false;
-//   if (latest.m2 && latest.m2 !== old.m2) return false;
-//   if (latest.floor && latest.floor !== old.floor) return false;
-//   if (latest.price && latest.price !== old.price) return false;
-//   if (latest.m2Price && latest.m2Price !== old.m2Price) return false;
-//   if (latest.description && latest.description !== old.description) return false;
-//   if (latest.condition && latest.condition !== old.condition) return false;
-//   if (latest.energy && latest.energy !== old.energy) return false;
-//   if (latest.propertyOf && latest.propertyOf !== old.propertyOf) return false;
-//   if (latest.buildYear && latest.buildYear !== old.buildYear) return false;
-
-//   return true;
-//   // return JSON.stringify(latest) === JSON.stringify(old);
-// };
-
 async function equality(data: AdvertisementI, oldData: IAdvertisement) {
 	if (!checkEquality(data as AdvertisementI, oldData)) {
-		// devLog(`newData `);
-		// devLog(`${JSON.stringify(data)}`);
-		// devLog(`oldData `);
-		// devLog(`${oldData}`);
-		const searching = oldData.adId;
+    const searching = oldData.adId;
+    console.log(searching);
 		await Advertisement.updateOne({ adId: searching }, data as AdvertisementI).exec();
-		// just check .. delete later
-		// const newInDb = await Advertisement.findOne({ adId: searching }).exec();
-		// console.log(`new in db `);
-		// console.log(`${JSON.stringify(newInDb)}`);
 	}
 }
 
