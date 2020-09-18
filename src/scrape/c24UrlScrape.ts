@@ -6,6 +6,13 @@ import { c24CityPartsSet, c24CityPartsTrimmedMap } from './../utils/searchVariab
 let openedTabs = 0;
 let browser: puppeteer.Browser;
 
+// waitFor will be deprecated https://github.com/puppeteer/puppeteer/issues/6214
+declare module 'puppeteer' {
+  export interface Page {
+    waitForTimeout(duration: number): Promise<void>;
+  }
+}
+
 export async function c24InitScrape(countyList: string[], parishList: string[]): Promise<initScrapeDataI[]> {
 	let result: initScrapeDataI[] = [];
 	let page: Page;
@@ -44,16 +51,16 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		}
 
 		await clickAreas(page, "//div[@class='firstlist']/ul/li/a", countyList);
-		await page.waitFor(200); // leave it
+		await page.waitForTimeout(200); // leave it
 		await clickAreas(page, "//div[@class='secondlist']/ul/li/a", parishList);
 		// await clickAreas(page, "//div[@class='secondlist']/ul/li/a", cityPartList);
-		await page.waitFor(500); // leave it closing popup
+		await page.waitForTimeout(500); // leave it closing popup
 		await page.click('a.button.navSearch');
-		await page.waitFor(500); // leave it closing popup
+		await page.waitForTimeout(500); // leave it closing popup
 		if (countyList.length != 0 || parishList.length != 0) {
 			console.log(`something went wrong arrays need to be empty
       countyList > ${countyList} | parishList > ${parishList}`);
-			throw new Error();
+			throw new Error('c24 url scrape arrays not empty');
 		}
 		// await (await page.$('input[name="priceRangeSearch:minValue"]')).focus();
 		// await page.keyboard.type(priceMin, { delay: 25 });
@@ -99,7 +106,7 @@ const waitAndLog = async (page: Page, selector: string, timeout = 30000) => {
 	const start = Date.now();
 	let myElement = await page.$(selector);
 	while (!myElement) {
-		await page.waitFor(250);
+		await page.waitForTimeout(250);
 		const alreadyWaitingFor = Date.now() - start;
 		if (alreadyWaitingFor > timeout) {
 			throw new Error(`Waiting for ${selector} timeouted after ${timeout} ms`);
@@ -120,16 +127,16 @@ const clickAreas = async function (page: Page, selector: string, areaList: strin
 				let text = await t.evaluate((element) => element.textContent);
 				if (areaList.includes(text)) {
 					await t.click();
-					await page.waitFor(50);
+          await page.waitForTimeout(50);
 					areaList.splice(areaList.indexOf(text), 1);
 					if (areaList.length === 0) return;
 				}
 			}
 		} catch (error) {
 			// console.log(`⚠️ ERROR clickAreas (usually will see 1) ⚠️ ${areaList}`);
-			await page.waitFor(1000);
+			await page.waitForTimeout(1000);
 		}
-		await page.waitFor(50);
+		await page.waitForTimeout(50);
 		tryCount--;
 	}
 };
