@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { app } from './app';
+import { populatePreferredCache } from './email/searchPreferred';
+import { populatePseudoCache } from './scrape/deScrapeRunnable';
 
 dotenv.config({ path: `${__dirname}/../config.env` });
 
@@ -16,6 +18,8 @@ mongoose
 // .then(() => console.log('DB connection successful!'));
 .then(async () => {
   console.log('DB connection successful!');
+  await populatePreferredCache();
+  await populatePseudoCache();
   // await dropAllCollections();
 });
 

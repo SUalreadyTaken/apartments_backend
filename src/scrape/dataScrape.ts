@@ -3,6 +3,7 @@ const axios = require('axios');
 import { AdvertisementI } from '..';
 import { devLog } from '../utils/devLogger';
 import { initScrapeDataI } from '.';
+import { kvCityPartsSet, c24CityPartsSet, c24CityPartsTrimmedMap } from './../utils/searchVariables';
 
 export async function kvDataScrape(target: initScrapeDataI): Promise<AdvertisementI | boolean> {
 	const res = await fetchData(target.url);
@@ -52,6 +53,17 @@ export const isKvAlive = (html: any): CheerioStatic | boolean => {
 export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): AdvertisementI => {
 	const $ = cheerio$;
 
+	const cityPartTmp = $('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnLeft > h1')
+		.text()
+		?.split(',')
+		.map((e) => e.trim());
+	let cityPart = '';
+	for (const s of cityPartTmp) {
+		if (c24CityPartsSet.has(s)) {
+			cityPart = c24CityPartsTrimmedMap.get(s);
+		}
+	}
+
 	// .last().text() doesn't work
 	const tmpTitle = $('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnLeft > h1')
 		.text()
@@ -88,6 +100,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	m2 = isNaN(m2) ? 0 : m2;
 
 	let buildYear = 0;
+	let url = '';
 	const child2 = $(
 		'div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > div.factsheet > table:nth-child(2) > tbody > tr'
 	);
@@ -95,10 +108,17 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 		const tmp = $(this).text()?.trim().split('Ehitusaasta:');
 		if (tmp.length === 2) {
 			buildYear = isNaN(parseFloat(tmp[1])) ? 0 : parseFloat(tmp[1]);
-			return false; // break
+			// return false; // break
+		}
+		if (url === '') {
+			const tmpUrl = $(this).text()?.trim().split('Otseviide:');
+			if (tmpUrl.length === 2) {
+				if (tmpUrl[1].includes('city24.ee')) {
+					url = tmpUrl[1].trim();
+				}
+			}
 		}
 	});
-
 	let energy = '';
 	let condition = '';
 	let propertyOf = '';
@@ -141,7 +161,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	return {
 		adId: target.id,
 		site: 'c24',
-		url: target.url,
+		url: url,
 		imgUrl: imgUrl,
 		title: title,
 		rooms: rooms,
@@ -149,7 +169,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 		price: price,
 		m2Price: m2Price,
 		description: description,
-		cityPart: target.cityPart,
+		cityPart: cityPart,
 		floor: floor,
 		buildYear: buildYear,
 		condition: condition,
@@ -170,6 +190,23 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 		.text()
 		?.trim();
 	const imgUrl = $('#obj_main_image').attr('src');
+
+	const tmpCityPart = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1')
+		.text()
+		?.split(',')
+		.map((e) => e.trim());
+	let cityPart = '';
+	for (const s of tmpCityPart) {
+		if (kvCityPartsSet.has(s)) {
+			cityPart = s;
+			break;
+		}
+	}
+
+  let url = $('#object-id-copy').text()?.trim();
+  if (url !== '' && url) {
+    url = 'https://' + url;
+  }
 
 	let price = 0;
 	let m2Price = 0;
@@ -231,7 +268,7 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 	return {
 		adId: target.id,
 		site: 'kv',
-		url: target.url,
+		url: url,
 		imgUrl: imgUrl,
 		title: title,
 		rooms: rooms,
@@ -239,7 +276,7 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 		price: price,
 		m2Price: m2Price,
 		description: description,
-		cityPart: target.cityPart,
+		cityPart: cityPart,
 		floor: floor,
 		buildYear: buildYear,
 		condition: condition,
@@ -262,34 +299,35 @@ export async function fetchData(url: string) {
 	// devLog('🕵️‍♂️ Crawling KV data...');
 	return await axios(url).catch((err: any) => {
 		console.log(`🔥Error axios request ${url} 🔥`);
-    if (err.code) console.log(err.code);
+		if (err.code) console.log(err.code);
 	});
 }
 
 // (async () => {
-//   // https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272925.html
-//   console.time('sss');
-// 	const target = {
-// 		id: 'asdasd',
-// 		url: 'https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272921235.html',
-// 		cityPart: 'Kesklinn',
-// 	};
-// 	const test = await kvDataScrape(target);
-// 	console.timeLog('sss', 'kv');
+// 	// https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272925.html
+// 	console.time('sss');
+// 	// const target = {
+// 	// 	id: 'asdasd',
+// 	// 	url:
+// 	// 		'https://www.kv.ee/uurile-anda-avar-4toaline-korter-pirita-aedlinnaku-3261087.html?nr=1&search_key=d5a89fb86b28fab8f85cfd82a68dd758',
+// 	// 	cityPart: 'Kesklinn',
+// 	// };
+// 	// const test = await kvDataScrape(target);
+// 	// console.timeLog('sss', 'kv');
 
 // 	const target2 = {
 // 		id: 'asdasd',
-// 		url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/6083660123123',
+// 		url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pc926v?selectedTabMenu=list',
 // 		cityPart: 'Kesklinn',
 // 	};
-// 	// const target2 = {
-// 	// 	id: 'asdasd',
-// 	// 	url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pct848',
-// 	// 	cityPart: 'Kesklinn',
-// 	// };
+// 	// // const target2 = {
+// 	// // 	id: 'asdasd',
+// 	// // 	url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pct848',
+// 	// // 	cityPart: 'Kesklinn',
+// 	// // };
 // 	const test2 = await c24DataScrape(target2);
 // 	console.timeLog('sss', 'c24');
-// 	console.log(test);
+// 	// console.log(test);
 // 	console.log('------------');
 // 	console.log(test2);
 // })();

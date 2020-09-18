@@ -7,12 +7,13 @@ import { PreferredApartment } from '../models/preferredApartmentModel';
 const preferredCache = new PreferredCache();
 const apartmentEmitter: EventEmitter = app.get('apartmentEmitter');
 
-(async() => {
-  const preferredApartmentsDB = await PreferredApartment.find({}).exec();
-  for (const data of preferredApartmentsDB) {
-    preferredCache.addToCache(data);
-  }
-})();
+export const populatePreferredCache = async () => {
+	console.log('Populating PreferredCache');
+	const preferredApartmentsDB = await PreferredApartment.find({}).exec();
+	for (const data of preferredApartmentsDB) {
+		preferredCache.addToCache(data);
+	}
+};
 
 apartmentEmitter.on('newApartment', (data: AdvertisementI) => prepareEmail(data));
 
@@ -20,13 +21,14 @@ const prepareEmail = (advertisement: AdvertisementI) => {
 	for (let i = 0; i < preferredCache.cache.length; i++) {
 		const preferredApartment = preferredCache.cache[i];
 		if (isPreferred(advertisement, preferredApartment)) {
-      console.log(`Send email New apartment ${advertisement.url}
+			console.log(`✉️ Send email 
+      New apartment ${advertisement.url}
       cityPart: ${advertisement.cityPart}
       price: ${advertisement.price}
       m2: ${advertisement.m2}
       m2Price: ${advertisement.m2Price}
-      rooms: ${advertisement.rooms}`)
-      // console.log(emailContent(advertisement));
+      rooms: ${advertisement.rooms}`);
+			// console.log(emailContent(advertisement));
 		}
 	}
 };

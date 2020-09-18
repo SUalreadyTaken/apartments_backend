@@ -6,12 +6,12 @@ import { devLog } from './../utils/devLogger';
 import { kvInitScrape } from './kvUrlScrape';
 import { c24InitScrape } from './c24UrlScrape';
 import { kvDataScrape, c24DataScrape, fetchData, isKvAlive, kvScrape, isC24Alive, c24Scrape } from './dataScrape';
-import { app } from './../app'
+import { app } from './../app';
 import { EventEmitter } from 'events';
 const sleep = require('util').promisify(setTimeout);
 const apartmentEmitter: EventEmitter = app.get('apartmentEmitter');
 
-let firstRun = true;
+// let firstRun = true;
 // TODO these will later come from db.. users search
 const COUNTY = ['Harju maakond'];
 const PARISH = ['Tallinn'];
@@ -26,13 +26,14 @@ let isUpdateing: boolean = false;
 const pseudoCache = new PseudoCache();
 
 // push last 200 Adds to pseudoCache
-const populateCache = async () => {
+export const populatePseudoCache = async () => {
+	console.log('Populating PseudoCache');
 	await Advertisement.find({})
 		.sort({ date: -1 })
 		.limit(200)
 		.exec(function (err, docs) {
 			pseudoCache.needToAddToCache(docs);
-			firstRun = false;
+			// firstRun = false;
 		});
 };
 
@@ -45,26 +46,26 @@ export async function runDataUpdate() {
 			const searching = oldData.adId;
 			if (oldData.site === 'kv') {
 				const res = await fetchData(target.url);
-				if (res.data) {
+				if (res && res.data) {
 					const cheerio$ = isKvAlive(res.data);
 					if (cheerio$ !== false) {
 						const data = kvScrape(target, cheerio$ as CheerioStatic);
 						await equality(data, oldData);
 					} else {
-            await Advertisement.deleteOne({ adId: searching }).exec();
+						await Advertisement.deleteOne({ adId: searching }).exec();
 						console.log(`❎Deleted ad ❎ ${oldData.url}`);
 						pseudoCache.removeFromCache(oldData.adId);
 					}
 				}
 			} else {
 				const res = await fetchData(target.url);
-				if (res.data) {
+				if (res && res.data) {
 					const cheerio$ = isC24Alive(res.data);
 					if (cheerio$ !== false) {
 						const data = c24Scrape(target, cheerio$ as CheerioStatic);
 						await equality(data, oldData);
 					} else {
-            await Advertisement.deleteOne({ adId: searching }).exec();
+						await Advertisement.deleteOne({ adId: searching }).exec();
 						console.log(`❎Deleted ad ❎ ${oldData.url}`);
 						pseudoCache.removeFromCache(oldData.adId);
 					}
@@ -82,7 +83,7 @@ export async function runScrape() {
     -------------------------------------------
     `);
 		isScraping = !isScraping;
-		if (firstRun) await populateCache();
+		// if (firstRun) await populateCache();
 
 		let url = buildKvUrl(kvCounty, kvParish);
 		let kvStart = Date.now();
@@ -118,8 +119,8 @@ export async function runScrape() {
 const addToDb = async (newAd: AdvertisementI) => {
 	try {
 		console.log(`found new Add > ${newAd.adId} || ${newAd.url}`);
-    await new Advertisement(newAd).save();
-    apartmentEmitter.emit('newApartment', newAd);
+		await new Advertisement(newAd).save();
+		apartmentEmitter.emit('newApartment', newAd);
 	} catch (error) {
 		console.log(`🔥 ERROR in addToDb `);
 		console.log(`${error}`);
@@ -155,7 +156,7 @@ const propertyCheck = (latest: any, old: any) => {
 		}
 	}
 	if (old !== undefined && latest === undefined) {
-		console.log('one is undefined');
+		console.log('old was undefined');
 		console.log(`old > '${old}'\nlatest > '${latest}'`);
 		return false;
 	}
@@ -165,24 +166,26 @@ const propertyCheck = (latest: any, old: any) => {
 // TODO simpelton version atm
 const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => {
 	if (!propertyCheck(latest.rooms, old.rooms)) {
-    apartmentEmitter.emit('newApartment' , latest);
-    return false;
-  };
+		apartmentEmitter.emit('newApartment', latest);
+		return false;
+	}
 	if (!propertyCheck(latest.m2, old.m2)) {
-    apartmentEmitter.emit('newApartment' , latest);
-    return false;
-  };
+		apartmentEmitter.emit('newApartment', latest);
+		return false;
+	}
 	if (!propertyCheck(latest.price, old.price)) {
-    apartmentEmitter.emit('newApartment' , latest);
-    return false;
-  } 
+		apartmentEmitter.emit('newApartment', latest);
+		return false;
+	}
 	if (!propertyCheck(latest.m2Price, old.m2Price)) {
-    apartmentEmitter.emit('newApartment' , latest);
-    return false;
-  }
+		apartmentEmitter.emit('newApartment', latest);
+		return false;
+	}
+	if (!propertyCheck(latest.url, old.url)) return false;
+	if (!propertyCheck(latest.cityPart, old.cityPart)) return false;
 	if (!propertyCheck(latest.imgUrl, old.imgUrl)) return false;
 	if (!propertyCheck(latest.title, old.title)) return false;
-  if (!propertyCheck(latest.floor, old.floor)) return false;
+	if (!propertyCheck(latest.floor, old.floor)) return false;
 	if (!propertyCheck(latest.description, old.description)) return false;
 	if (!propertyCheck(latest.condition, old.condition)) return false;
 	if (!propertyCheck(latest.energy, old.energy)) return false;
@@ -194,9 +197,10 @@ const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => 
 
 async function equality(data: AdvertisementI, oldData: IAdvertisement) {
 	if (!checkEquality(data as AdvertisementI, oldData)) {
-    const searching = oldData.adId;
+		const searching = oldData.adId;
     console.log(searching);
-		await Advertisement.updateOne({ adId: searching }, data as AdvertisementI).exec();
+    data.date = oldData.date; // keep added date
+		await Advertisement.updateOne({ adId: searching }, data).exec();
 	}
 }
 
