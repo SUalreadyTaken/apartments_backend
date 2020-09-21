@@ -70,7 +70,14 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		await page.click('a.searchButton');
 		await page
 			.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 })
-			.catch(() => console.log('probably 15sec timeout'));
+			.catch((error) => {
+        if (error.name !== 'TimeoutError') {
+          console.log(`🔥 search navigation error not timeout`);
+          console.log(error);
+        } else {
+          console.log('15sec timeout error');
+        }
+      });
 		const content = await page.content();
 		const $ = cheerio.load(content);
 		const advertisementTable = $('li.new.result.regular');
@@ -140,3 +147,8 @@ const clickAreas = async function (page: Page, selector: string, areaList: strin
 		tryCount--;
 	}
 };
+
+
+(async() => {
+
+})();

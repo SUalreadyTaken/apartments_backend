@@ -14,8 +14,8 @@ const mainFunc = async (url: string): Promise<initScrapeDataI[]> => {
 	let result: initScrapeDataI[] = [];
 	// let result: AdvertisementI[] = [];
 	let res = await fetchData(url);
-	if (!res.data) {
-		devLog('Invalid data Obj');
+	if (!res || !res.data) {
+		console.log(`🔥 invalid url ${url}`);
 		// @ts-ignore
 		return result;
 	}

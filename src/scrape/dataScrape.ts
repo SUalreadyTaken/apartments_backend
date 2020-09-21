@@ -299,7 +299,7 @@ export async function fetchData(url: string) {
 	// devLog('🕵️‍♂️ Crawling KV data...');
 	return await axios(url).catch((err: any) => {
 		console.log(`🔥Error axios request ${url} 🔥`);
-		if (err.code) console.log(err.code);
+		if (err.name) console.log(err.name);
 	});
 }
 

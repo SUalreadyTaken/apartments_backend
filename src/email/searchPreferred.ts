@@ -21,7 +21,7 @@ const prepareEmail = (advertisement: AdvertisementI) => {
 	for (let i = 0; i < preferredCache.cache.length; i++) {
 		const preferredApartment = preferredCache.cache[i];
 		if (isPreferred(advertisement, preferredApartment)) {
-			console.log(`✉️ Send email 
+			console.log(`✉️  Send email 
       New apartment ${advertisement.url}
       cityPart: ${advertisement.cityPart}
       price: ${advertisement.price}
