@@ -128,27 +128,16 @@ const addToDb = async (newAd: AdvertisementI) => {
 		//E11000 duplicate key error collection
 		if (error.code === 11000) {
 			console.log(`Duplicate id trying to update`);
-      
       const searching = newAd.adId;
 			const oldData = await Advertisement.findOne({ adId: searching }).exec();
-      await equality(newAd, oldData, searching)
-      pseudoCache.cache.push({ id: newAd.adId, url: newAd.url, cityPart: newAd.cityPart });
-      
-      // try {
-			// 	if (!checkEquality(newAd, old)) {
-			// 		await Advertisement.updateOne({ adId: searching }, newAd).exec();
-			// 	}
-			// 	pseudoCache.cache.push({ id: newAd.adId, url: newAd.url, cityPart: newAd.cityPart });
-			// } catch (error) {
-			// 	console.log(`🔥 ERROR in addToDb.. updateOne`);
-			// 	console.log(`${error}`);
-			// }
+			await equality(newAd, oldData, searching);
+			pseudoCache.cache.push({ id: newAd.adId, url: newAd.url, cityPart: newAd.cityPart });
 		}
 	}
 };
 
 const propertyCheck = (latest: any, old: any) => {
-	if (latest !== undefined || latest !== '') {
+	if (latest !== undefined && latest !== '') {
 		if (old === undefined) {
 			console.log(`old > '${old}'\nlatest > '${latest}'`);
 			return false;
@@ -161,7 +150,7 @@ const propertyCheck = (latest: any, old: any) => {
 		}
 	}
 	if (old !== undefined && latest === undefined) {
-		console.log('old was undefined');
+		console.log('latest is undefined');
 		console.log(`old > '${old}'\nlatest > '${latest}'`);
 		return false;
 	}
@@ -170,11 +159,11 @@ const propertyCheck = (latest: any, old: any) => {
 
 // TODO simpelton version atm
 const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => {
-  if (!propertyCheck(latest.url, old.url)) {
-    console.log(`🔥🔥🔥 need to delete and insert new.. site uses old ids for new ads`);
-    console.log(`old > ${old.url} | new > ${latest.url}`);
-    return false;
-  }
+	if (!propertyCheck(latest.url, old.url)) {
+		console.log(`🔥🔥🔥 need to delete and insert new.. site uses old ids for new ads`);
+		console.log(`old > ${old.url} | new > ${latest.url}`);
+		return false;
+	}
 	if (!propertyCheck(latest.rooms, old.rooms)) {
 		apartmentEmitter.emit('newApartment', latest);
 		return false;
@@ -205,10 +194,10 @@ const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => 
 };
 
 async function equality(data: AdvertisementI, oldData: IAdvertisement, searching: string) {
-	if (!checkEquality(data as AdvertisementI, oldData)) {
+	if (!checkEquality(data, oldData)) {
 		// const searching = oldData.adId;
-    console.log(searching);
-    data.date = oldData.date; // keep added date
+		console.log(searching);
+		data.date = oldData.date; // keep added date
 		await Advertisement.updateOne({ adId: searching }, data).exec();
 	}
 }

@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-// TODO check the required or not '?'
 export interface IAdvertisement extends Document {
 	adId: string;
 	site: string;
@@ -22,7 +21,6 @@ export interface IAdvertisement extends Document {
 }
 
 const advertisementSchema: Schema = new Schema({
-	// TODO 2 sites.. ids can match
 	adId: { type: String, required: true, unique: true },
 	site: { type: String, required: true },
 	url: { type: String, required: true, unique: true },

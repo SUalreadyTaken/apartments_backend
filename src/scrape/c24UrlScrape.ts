@@ -8,31 +8,31 @@ let browser: puppeteer.Browser;
 
 // waitFor will be deprecated https://github.com/puppeteer/puppeteer/issues/6214
 declare module 'puppeteer' {
-  export interface Page {
-    waitForTimeout(duration: number): Promise<void>;
-  }
+	export interface Page {
+		waitForTimeout(duration: number): Promise<void>;
+	}
 }
 
 export async function c24InitScrape(countyList: string[], parishList: string[]): Promise<initScrapeDataI[]> {
 	let result: initScrapeDataI[] = [];
 	let page: Page;
-	// let browser;
 	try {
-		// // TODO check if browser gives memory problems if not reset
 		if (openedTabs === 0) {
 			if (browser) await browser.close();
 			browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 			openedTabs++;
 		} else {
-			openedTabs = openedTabs >= 20 ? 0 : openedTabs + 1;
+			openedTabs = openedTabs >= 10 ? 0 : openedTabs + 1;
 		}
-		// browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 		devLog('🕵️‍♂️ Crawling C24 URLs...');
 		page = await browser.newPage();
 		page.setViewport({ width: 1700, height: 768 });
-
-		await page.goto('https://www.city24.ee/et/nimekiri/uurida/korter?ord=sort-date-desc&c=EE', {
+    await page.setRequestInterception(true);
+    page.on('request', handleInterceptedRequests);
+    
+    await page.goto('https://www.city24.ee/et/nimekiri/uurida/korter?ord=sort-date-desc&c=EE', {
 			waitUntil: 'domcontentloaded',
+			timeout: 15000,
 		});
 		await page.click('a.openAreaSelect');
 		await waitAndLog(page, 'div.firstlist');
@@ -51,16 +51,17 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		}
 
 		await clickAreas(page, "//div[@class='firstlist']/ul/li/a", countyList);
+		if (countyList.length > 0) {
+			throw new Error(`c24 couldn't click countyList going to return empty`);
+		}
 		await page.waitForTimeout(200); // leave it
 		await clickAreas(page, "//div[@class='secondlist']/ul/li/a", parishList);
 		// await clickAreas(page, "//div[@class='secondlist']/ul/li/a", cityPartList);
 		await page.waitForTimeout(500); // leave it closing popup
 		await page.click('a.button.navSearch');
 		await page.waitForTimeout(500); // leave it closing popup
-		if (countyList.length != 0 || parishList.length != 0) {
-			console.log(`something went wrong arrays need to be empty
-      countyList > ${countyList} | parishList > ${parishList}`);
-			throw new Error('c24 url scrape arrays not empty');
+		if (parishList.length > 0) {
+			throw new Error(`c24 couldn't click parishList going to return empty`);
 		}
 		// await (await page.$('input[name="priceRangeSearch:minValue"]')).focus();
 		// await page.keyboard.type(priceMin, { delay: 25 });
@@ -68,19 +69,13 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 		// await page.keyboard.type(priceMax, { delay: 25 });
 
 		await page.click('a.searchButton');
-		await page
-			.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 })
-			.catch((error) => {
-        if (error.name !== 'TimeoutError') {
-          console.log(`🔥 search navigation error not timeout`);
-          console.log(error);
-        } else {
-          console.log('15sec timeout error');
-        }
-      });
+
+		await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
+
 		const content = await page.content();
 		const $ = cheerio.load(content);
 		const advertisementTable = $('li.new.result.regular');
+
 		advertisementTable.each(function (this: CheerioElement) {
 			const combined = $(this).find('a.addressLink');
 			const id = combined.attr('name') + '_c24';
@@ -97,14 +92,22 @@ export async function c24InitScrape(countyList: string[], parishList: string[]):
 					break;
 				}
 			}
-			if (url.includes('city24.ee/')) result.push({ url, id, cityPart });
+			if (url.includes('city24.ee/') && cityPart !== '') result.push({ url, id, cityPart });
 		});
 	} catch (error) {
-		console.log('🔥 ERROR 🔥');
-		console.log(error);
+		if (error.name !== 'TimeoutError') {
+			console.log('🔥 ERROR 🔥');
+			console.log(error);
+		} else {
+			console.log('15sec timeout error');
+		}
 		// process s.exit(1);
 	} finally {
-		if (page) await page.close();
+		if (page) {
+      // TODO need to remove/off ?
+      page.off('request', handleInterceptedRequests);
+      await page.close();
+    }
 	}
 	return result;
 }
@@ -125,8 +128,17 @@ const waitAndLog = async (page: Page, selector: string, timeout = 30000) => {
 	return myElement;
 };
 
+const handleInterceptedRequests = (req: puppeteer.Request) => {
+  // block stylesheets fonts image/jpg and disables page caching
+  if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.url().endsWith('.jpg')) {
+    req.abort();
+  } else {
+    req.continue();
+  }
+}
+
 const clickAreas = async function (page: Page, selector: string, areaList: string[]) {
-	let tryCount = 100;
+	let tryCount = 20;
 	while (tryCount > 0) {
 		try {
 			const clickableList = await page.$x(selector);
@@ -134,21 +146,18 @@ const clickAreas = async function (page: Page, selector: string, areaList: strin
 				let text = await t.evaluate((element) => element.textContent);
 				if (areaList.includes(text)) {
 					await t.click();
-          await page.waitForTimeout(50);
+					await page.waitForTimeout(50);
 					areaList.splice(areaList.indexOf(text), 1);
 					if (areaList.length === 0) return;
 				}
 			}
 		} catch (error) {
-			// console.log(`⚠️ ERROR clickAreas (usually will see 1) ⚠️ ${areaList}`);
+			if (tryCount < 15) {
+				console.log(`⚠️ ERROR clickAreas ⚠️ ${areaList}`);
+			}
 			await page.waitForTimeout(1000);
 		}
 		await page.waitForTimeout(50);
 		tryCount--;
 	}
 };
-
-
-(async() => {
-
-})();
