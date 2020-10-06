@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 const request = require('request');
 const sleep = require('util').promisify(setTimeout);
+import * as cron from 'node-cron'
 const cookieParser = require('cookie-parser');
 // const fetch = require('node-fetch');
 const adController = require(`${__dirname}/controllers/adController.ts`);
@@ -42,22 +43,24 @@ app.use(cookieParser());
 app.use('/ad', adController);
 
 let alternativeBoolean: boolean = undefined;
-// @ts-ignore
+// @ts-ignore 
 let usingAlternative: boolean = process.env.USE_ALTERNATIVE_APPS;
 if (process.env.DEVELOPING === 'no') {
 	if (usingAlternative === true) {
-		getAlternativeBoolean();
-		setInterval(() => runScrape(), 40000);
-		// will be locked if still updating
-		setInterval(() => runDataUpdate(), 60000);
-		setInterval(() => {
-			if (!alternativeBoolean && alternativeBoolean != undefined) request(process.env.HEROKU_URL + 'ad/');
-		}, 240000);
+    // TODO
+    getAlternativeBoolean();
+		if (!alternativeBoolean && alternativeBoolean != undefined) {
+			cron.schedule('*/1 * * * *', () => {
+				runScrape();
+				runDataUpdate();
+			});
+		}
 	} else {
-		setInterval(() => runScrape(), 40000);
-		// will be locked if still updating
-		setInterval(() => runDataUpdate(), 60000);
-		setInterval(() => request(process.env.HEROKU_URL + 'ad/'), 240000);
+    cron.schedule('*/1 * * * *', () => {
+      runScrape();
+			runDataUpdate();
+		});
+		cron.schedule('*/4 * * * *', () => request(process.env.HEROKU_URL + 'ad/'));
 	}
 }
 

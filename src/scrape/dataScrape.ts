@@ -10,7 +10,7 @@ export async function kvDataScrape(target: initScrapeDataI): Promise<Advertiseme
 	if (res && res.data) {
 		const cheerio$ = isKvAlive(res.data);
 		if (cheerio$ !== false) {
-			return kvScrape(target, cheerio$ as CheerioStatic);
+			return kvScrape(target, cheerio$ as cheerio.Root);
 		}
 	}
 	return false;
@@ -21,13 +21,13 @@ export async function c24DataScrape(target: initScrapeDataI): Promise<Advertisem
 	if (res && res.data) {
 		const cheerio$ = isC24Alive(res.data);
 		if (cheerio$ !== false) {
-			return c24Scrape(target, cheerio$ as CheerioStatic);
+			return c24Scrape(target, cheerio$ as cheerio.Root);
 		}
 	}
 	return false;
 }
 
-export const isC24Alive = (html: any): CheerioStatic | boolean => {
+export const isC24Alive = (html: any): cheerio.Root | boolean => {
 	const $ = cheerio.load(html, {});
 	const h1Title = $('div.container > div.wrapper > div.content > h2').text()?.trim();
 	if (h1Title === 'Oihh!') {
@@ -37,7 +37,7 @@ export const isC24Alive = (html: any): CheerioStatic | boolean => {
 	return $;
 };
 
-export const isKvAlive = (html: any): CheerioStatic | boolean => {
+export const isKvAlive = (html: any): cheerio.Root | boolean => {
 	const $ = cheerio.load(html, {});
 
 	// body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1
@@ -46,11 +46,10 @@ export const isKvAlive = (html: any): CheerioStatic | boolean => {
 		// Ad is deleted.. delete from db
 		return false;
 	}
-	// console.log(`result > ${result}`);
 	return $;
 };
 
-export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): AdvertisementI => {
+export const c24Scrape = (target: initScrapeDataI, cheerio$: cheerio.Root): AdvertisementI => {
 	const $ = cheerio$;
 
 	const cityPartTmp = $('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnLeft > h1')
@@ -104,7 +103,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	const child2 = $(
 		'div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > div.factsheet > table:nth-child(2) > tbody > tr'
 	);
-	child2.each(function (this: CheerioElement) {
+	child2.each(function (this: cheerio.Element) {
 		const tmp = $(this).text()?.trim().split('Ehitusaasta:');
 		if (tmp.length === 2) {
 			buildYear = isNaN(parseFloat(tmp[1])) ? 0 : parseFloat(tmp[1]);
@@ -125,7 +124,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	const child4 = $(
 		'div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > div.factsheet > table:nth-child(4) > tbody > tr'
 	);
-	child4.each(function (this: CheerioElement) {
+	child4.each(function (this: cheerio.Element) {
 		if (energy === '') {
 			const tmpEnergy = $(this).text()?.trim().split('Energiamärgis:');
 			if (tmpEnergy.length === 2) energy = tmpEnergy[1].trim();
@@ -145,7 +144,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	);
 	let rooms = 0;
 	let floor = '';
-	child6.each(function (this: CheerioElement) {
+	child6.each(function (this: cheerio.Element) {
 		if (rooms === 0) {
 			const tmpRooms = $(this).text()?.trim().split('Tubade arv:');
 			if (tmpRooms.length === 2) rooms = isNaN(parseFloat(tmpRooms[1])) ? 0 : parseFloat(tmpRooms[1]);
@@ -179,7 +178,7 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adv
 	};
 };
 
-export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): AdvertisementI => {
+export const kvScrape = (target: initScrapeDataI, cheerio$: cheerio.Root): AdvertisementI => {
 	const $ = cheerio$;
 
 	const title = $('body > div.main-helper > div > div.main-content-wrap > div.hgroup.large > div > h1').text()?.trim();
@@ -203,10 +202,10 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 		}
 	}
 
-  let url = $('#object-id-copy').text()?.trim();
-  if (url !== '' && url) {
-    url = 'https://' + url;
-  }
+	let url = $('#object-id-copy').text()?.trim();
+	if (url !== '' && url) {
+		url = 'https://' + url;
+	}
 
 	let price = 0;
 	let m2Price = 0;
@@ -221,17 +220,19 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: CheerioStatic): Adve
 	const priceAndM2 = $(
 		'body > div.main-helper > div > div.main-content-wrap > div.grid.object-article > div.col-1-4.t-1-2 > div > div.object-article-details > div.grid > div > div'
 	);
-	priceAndM2.each(function (this: CheerioElement) {
-		price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('strong').text()?.trim()));
+	priceAndM2.each(function (this: cheerio.Element) {
+		price = parseFloat(sliceSpaceNonBreakingSpace($(this).children('strong').text()?.trim()));
+		// price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('strong').text()?.trim()));
 		price = isNaN(price) ? 0 : price;
-		m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text()?.trim()));
+    m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span.object-m2-price').text()?.trim()));
+    // m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text()?.trim()));
 		m2Price = isNaN(m2Price) ? 0 : m2Price;
 	});
 
 	const otherData = $(
 		'body > div.main-helper > div > div.main-content-wrap > div.grid.object-article > div.col-1-4.t-1-2 > div > div.object-article-details > table > tbody > tr'
 	);
-	otherData.each(function (this: CheerioElement) {
+	otherData.each(function (this: cheerio.Element) {
 		if (rooms === 0) {
 			const tmpRooms = $(this).text()?.trim().split('Tube');
 			if (tmpRooms.length === 2) rooms = isNaN(parseFloat(tmpRooms[1])) ? 0 : parseFloat(tmpRooms[1]);
@@ -296,7 +297,6 @@ const sliceSpaceNonBreakingSpace = (s: string) => {
 };
 
 export async function fetchData(url: string) {
-	// devLog('🕵️‍♂️ Crawling KV data...');
 	return await axios(url).catch((err: any) => {
 		console.log(`🔥Error axios request ${url} 🔥`);
 		if (err.name) console.log(err.name);
@@ -306,28 +306,28 @@ export async function fetchData(url: string) {
 // (async () => {
 // 	// https://www.kv.ee/korter-on-puhas-ja-heas-korras-olemas-koogimoobel-3272925.html
 // 	console.time('sss');
-// 	// const target = {
-// 	// 	id: 'asdasd',
-// 	// 	url:
-// 	// 		'https://www.kv.ee/uurile-anda-avar-4toaline-korter-pirita-aedlinnaku-3261087.html?nr=1&search_key=d5a89fb86b28fab8f85cfd82a68dd758',
-// 	// 	cityPart: 'Kesklinn',
-// 	// };
-// 	// const test = await kvDataScrape(target);
-// 	// console.timeLog('sss', 'kv');
-
-// 	const target2 = {
+// 	const target = {
 // 		id: 'asdasd',
-// 		url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pc926v?selectedTabMenu=list',
+// 		// url: 'https://www.kv.ee/3276954',
+// 		url: 'https://www.kv.ee/3266628',
 // 		cityPart: 'Kesklinn',
 // 	};
-// 	// // const target2 = {
-// 	// // 	id: 'asdasd',
-// 	// // 	url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pct848',
-// 	// // 	cityPart: 'Kesklinn',
-// 	// // };
-// 	const test2 = await c24DataScrape(target2);
-// 	console.timeLog('sss', 'c24');
-// 	// console.log(test);
-// 	console.log('------------');
-// 	console.log(test2);
+// 	const test = await kvDataScrape(target);
+// 	console.log(test);
+// 	console.timeLog('sss', 'kv');
+
+// 	// const target2 = {
+// 	// 	id: 'asdasd',
+// 	// 	url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pc926v?selectedTabMenu=list',
+// 	// 	cityPart: 'Kesklinn',
+// 	// };
+// 	// // // const target2 = {
+// 	// // // 	id: 'asdasd',
+// 	// // // 	url: 'https://www.city24.ee/et/kinnisvara/korterite-uur/Tallinn-Kesklinna-linnaosa/pct848',
+// 	// // // 	cityPart: 'Kesklinn',
+// 	// // // };
+// 	// const test2 = await c24DataScrape(target2);
+// 	// console.timeLog('sss', 'c24');
+// 	// console.log('------------');
+// 	// console.log(test2);
 // })();

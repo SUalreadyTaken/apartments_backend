@@ -3,11 +3,11 @@ import { PseudoCache } from '../models/pseudoCache';
 import { Advertisement, IAdvertisement } from '../models/advertisementModel';
 import { AdvertisementI } from '..';
 import { devLog } from './../utils/devLogger';
-import { kvInitScrape } from './kvUrlScrape';
-import { c24InitScrape } from './c24UrlScrape';
+import { kvInitScrape, c24InitScrape } from './urlScrape';
 import { kvDataScrape, c24DataScrape, fetchData, isKvAlive, kvScrape, isC24Alive, c24Scrape } from './dataScrape';
 import { app } from './../app';
 import { EventEmitter } from 'events';
+import * as cheerio from 'cheerio';
 const sleep = require('util').promisify(setTimeout);
 const apartmentEmitter: EventEmitter = app.get('apartmentEmitter');
 
@@ -33,7 +33,6 @@ export const populatePseudoCache = async () => {
 		.limit(200)
 		.exec(function (err, docs) {
 			pseudoCache.needToAddToCache(docs);
-			// firstRun = false;
 		});
 };
 
@@ -48,10 +47,10 @@ export async function runDataUpdate() {
 				const res = await fetchData(target.url);
 				if (res && res.data) {
 					const cheerio$ = isKvAlive(res.data);
-					if (cheerio$ !== false) {
-						const data = kvScrape(target, cheerio$ as CheerioStatic);
+					if (typeof cheerio$ !== 'boolean') {
+					// if (cheerio$ !== false) {
+						const data = kvScrape(target, cheerio$);
 						await equality(data, oldData, searching);
-						// await equality(data, oldData);
 					} else {
 						await Advertisement.deleteOne({ adId: searching }).exec();
 						console.log(`❎Deleted ad ❎ ${searching}`);
@@ -62,8 +61,9 @@ export async function runDataUpdate() {
 				const res = await fetchData(target.url);
 				if (res && res.data) {
 					const cheerio$ = isC24Alive(res.data);
-					if (cheerio$ !== false) {
-						const data = c24Scrape(target, cheerio$ as CheerioStatic);
+					if (typeof cheerio$ !== 'boolean') {
+					// if (cheerio$ !== false) {
+						const data = c24Scrape(target, cheerio$);
 						await equality(data, oldData, searching);
 					} else {
 						await Advertisement.deleteOne({ adId: searching }).exec();
@@ -84,15 +84,13 @@ export async function runScrape() {
     -------------------------------------------
     `);
 		isScraping = !isScraping;
-		// if (firstRun) await populateCache();
-
-		let url = buildKvUrl(kvCounty, kvParish);
 		let kvStart = Date.now();
-		// console.log('should only see this after 40 secs');
-		const kvInitResult = await kvInitScrape(url);
+    const kvUrl = buildKvUrl(kvCounty, kvParish);
+    const c24Url = 'https://www.city24.ee/et/nimekiri/uurida/korter?ord=sort-date-desc&c=EE';
+		const kvInitResult = await kvInitScrape(kvUrl);
 		devLog(`✅ Kv crawling took ${Date.now() - kvStart} ms `);
 		let c24Start = Date.now();
-		const c24InitResult = await c24InitScrape(Array.from(COUNTY), Array.from(PARISH));
+		const c24InitResult = await c24InitScrape(c24Url);
 		devLog(`✅ C24 crawling took ${Date.now() - c24Start} ms `);
 		const newKvs = pseudoCache.inCache(kvInitResult);
 		const newC24s = pseudoCache.inCache(c24InitResult);
@@ -160,7 +158,10 @@ const propertyCheck = (latest: any, old: any) => {
 // TODO simpelton version atm
 const checkEquality = (latest: AdvertisementI, old: AdvertisementI): boolean => {
 	if (!propertyCheck(latest.url, old.url)) {
-		console.log(`🔥🔥🔥 need to delete and insert new.. site uses old ids for new ads`);
+    // TODO true.. need to delete old and insert new.. for order purposes.. or just update date too
+    // double check.. return false and check url in equality function
+    // remove it from here.. new apartment should have dif data so should return false either way
+    console.log(`🔥🔥🔥 need to delete and insert new.. site uses old ids for new ads`);
 		console.log(`old > ${old.url} | new > ${latest.url}`);
 		return false;
 	}

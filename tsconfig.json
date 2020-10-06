@@ -13,6 +13,9 @@
             "node_modules/*"
         ]
     }
-  }
+  },
+  "include": [
+    "src/**/*"
+  ]
   
 }
