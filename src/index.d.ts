@@ -1,5 +1,6 @@
 import { IAdvertisement } from './models/advertisementModel';
 import { IPreferredApartment } from './models/preferredApartmentModel'
+import { IUser } from './models/userModel';
 
 export interface AdvertisementI {
 	adId: IAdvertisement['adId'];
@@ -34,4 +35,22 @@ export interface PreferredApartmentI {
 	m2PriceMin?: IPreferredApartment['m2PriceMin'];
 	m2PriceMax?: IPreferredApartment['m2PriceMax'];
 	date: IPreferredApartment['date'];
+}
+
+export interface UserI {
+	email: IUser['email'];
+	password: IUser['password'];
+	passwordConfirm: IUser['passwordConfirm'];
+	role?: IUser['role'];
+	passwordChangedAt?: IUser['passwordChangedAt'];
+	passwordResetToken?: IUser['passwordResetToken'];
+	passwordResetExpires?: IUser['passwordResetExpires'];
+	active?: IUser['active'];
+	// password: string;
+	// passwordConfirm: string;
+	// role: string;
+	// passwordChangedAt: Date;
+	// passwordResetToken: String;
+	// passwordResetExpires: Date;
+	// active: boolean;
 }

@@ -30,10 +30,16 @@ export async function c24DataScrape(target: initScrapeDataI): Promise<Advertisem
 export const isC24Alive = (html: any): cheerio.Root | boolean => {
 	const $ = cheerio.load(html, {});
 	const h1Title = $('div.container > div.wrapper > div.content > h2').text()?.trim();
-	if (h1Title === 'Oihh!') {
+  if (h1Title === 'Oihh!') {
 		// Ad is deleted.. delete from db
 		return false;
-	}
+  }
+  const notActive = $('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnLeft > div').text()?.trim();
+  if (notActive === 'Kuulutus ei ole aktiivne') {
+    // Ad is not active.. delete from db
+    return false;
+  }
+
 	return $;
 };
 
@@ -69,22 +75,24 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: cheerio.Root): Adve
 		?.split('Üürikorterid');
 	const title = tmpTitle.length === 2 ? tmpTitle[1] : tmpTitle[0];
 
-	let price = parseFloat(
-		$('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnRight > span.price')
-			.text()
-			// .replace(' ', '')
-			?.split('EUR')[0]
-			.replace(' ', '')
-	);
-	price = isNaN(price) ? 0 : price;
+	let tmpPrice = $('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnRight > span.price').text();
+	if (tmpPrice.includes('kuu')) {
+		console.log('there is kuu');
+		const slashIndex = tmpPrice.indexOf('/');
+		if (slashIndex > -1 && slashIndex + 1 <= tmpPrice.length) {
+			tmpPrice = tmpPrice
+				.substring(slashIndex + 1)
+				.split('EUR')[0]
+				.replace(' ', '');
+			console.log(`after slash >> ${tmpPrice}`);
+		}
+	} else {
+		tmpPrice = tmpPrice?.split('EUR')[0].replace(' ', '');
+	}
+	console.log(`tmpPrice >> ${tmpPrice}`);
+	let price = parseFloat(tmpPrice);
 
-	let m2Price = parseFloat(
-		$('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnRight > span.priceSqrM')
-			.text()
-			?.split(' EUR')[0]
-			.replace(',', '.')
-	);
-	m2Price = isNaN(m2Price) ? 0 : m2Price;
+	price = isNaN(price) ? 0 : price;
 
 	const description = $('div.colLeft > div:nth-child(2) > span:nth-child(2) > div > div > h2').first().text();
 
@@ -98,6 +106,14 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: cheerio.Root): Adve
 	);
 	m2 = isNaN(m2) ? 0 : m2;
 
+	let m2Price = parseFloat(
+		$('div.colLeft > div.titleWrapper > div.itemTitle > div.itemTitleColumnRight > span.priceSqrM')
+			.text()
+			?.split(' EUR')[0]
+			.replace(',', '.')
+	);
+	m2Price = isNaN(m2Price) ? 0 : m2Price;
+	
 	let buildYear = 0;
 	let url = '';
 	const child2 = $(
@@ -155,7 +171,15 @@ export const c24Scrape = (target: initScrapeDataI, cheerio$: cheerio.Root): Adve
 		}
 	});
 
-	const imgUrl = $('#img1').attr('src') || '';
+  const imgUrl = $('#img1').attr('src') || '';
+  
+  if (m2Price === 0 && price !== 0 && m2 !== 0) {
+    m2Price = price / m2;
+  }
+  
+  if (m2 === 0 && price !== 0 && m2Price !== 0) {
+    m2 = price / m2Price;
+  }
 
 	return {
 		adId: target.id,
@@ -224,8 +248,8 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: cheerio.Root): Adver
 		price = parseFloat(sliceSpaceNonBreakingSpace($(this).children('strong').text()?.trim()));
 		// price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('strong').text()?.trim()));
 		price = isNaN(price) ? 0 : price;
-    m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span.object-m2-price').text()?.trim()));
-    // m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text()?.trim()));
+		m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span.object-m2-price').text()?.trim()));
+		// m2Price = parseFloat(sliceSpaceNonBreakingSpace($(this).find('span').text()?.trim()));
 		m2Price = isNaN(m2Price) ? 0 : m2Price;
 	});
 
@@ -264,7 +288,15 @@ export const kvScrape = (target: initScrapeDataI, cheerio$: cheerio.Root): Adver
 			const tmpEnergy = $(this).text()?.trim().split('Energiamärgis');
 			if (tmpEnergy.length === 2) energy = tmpEnergy[1].trim();
 		}
-	});
+  });
+  
+  if (m2Price === 0 && price !== 0 && m2 !== 0) {
+    m2Price = price / m2;
+  }
+
+  if (m2 === 0 && price !== 0 && m2Price !== 0) {
+    m2 = price / m2Price;
+  }
 
 	return {
 		adId: target.id,

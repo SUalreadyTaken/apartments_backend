@@ -7,7 +7,11 @@ const sleep = require('util').promisify(setTimeout);
 import * as cron from 'node-cron'
 const cookieParser = require('cookie-parser');
 // const fetch = require('node-fetch');
-const adController = require(`${__dirname}/controllers/adController.ts`);
+// const adController = require(`${__dirname}/controllers/adController.ts`);
+import { advertisementRoutes } from './routes/advertisementRoutes';
+import { userRoutes } from './routes/userRoutes';
+import { preferredRoutes } from './routes/preferredRoutes';
+import { globalErrorHandler } from './controllers/errorController';
 // duplicate.. needed for test
 import dotenv from 'dotenv';
 import { EventEmitter } from 'events';
@@ -25,7 +29,8 @@ app.options('*', cors());
 dotenv.config({ path: `${__dirname}/../config.env` });
 
 if (process.env.NODE_ENV === 'development') {
-	app.use(morgan('dev'));
+  // app.use(morgan('dev'));
+  app.use(morgan('[:date[iso]] :method :url :status :res[content-length] - :response-time ms'));
 }
 
 const limiter = rateLimit({
@@ -40,7 +45,11 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
-app.use('/ad', adController);
+app.use('/api/v1/a', advertisementRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/preferred', preferredRoutes);
+app.use(globalErrorHandler);
+// app.use('/ad', adController);
 
 let alternativeBoolean: boolean = undefined;
 // @ts-ignore 
